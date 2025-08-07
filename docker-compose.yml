@@ -1,0 +1,69 @@
+# Rodar com `docker-compose up -d`
+
+services:
+  db:
+    image: mysql
+    container_name: db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: icomp123
+      MYSQL_DATABASE: wacad_bd
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: icomp123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -proot || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4444
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_DATABASE: booksdb
+      DATABASE_URL: mysql://admin:icomp123@db:3306/wacad_bd
+    ports:
+      - "4444:4444"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8000:80"
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_USER: admin
+      PMA_PASSWORD: icomp123
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
