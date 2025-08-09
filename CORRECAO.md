@@ -1,0 +1,3 @@
+- sem arquivo de instruções
+- sem caminhos configurados
+- nota final: 8
